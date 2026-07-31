@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GF Day Surprise</title>
+    <style>
+        /* Vaporwave Reset and Background */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #fce4ec;
+            background-image: 
+                linear-gradient(rgba(255, 182, 193, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 182, 193, 0.3) 1px, transparent 1px);
+            background-size: 24px 24px;
+            cursor: crosshair;
+        }
+
+        .vapor-window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid #edafaf;
+            border-radius: 12px;
+            background-color: #fff9f0;
+            box-shadow: 8px 8px 0px rgba(237, 175, 175, 0.5);
+            display: none;
+            z-index: 10;
+        }
+
+        .window-header {
+            background-color: #edafaf;
+            color: white;
+            padding: 8px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 2px solid #edafaf;
+        }
+
+        .window-icons {
+            display: flex;
+            gap: 6px;
+            font-size: 16px;
+        }
+
+        .window-content {
+            padding: 24px;
+            text-align: center;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* SCENE 1: Setup Popup */
+        #setup-popup {
+            width: 360px;
+            display: block;
+        }
+
+        #setup-popup .window-content p {
+            color: #d88195;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-size: 15px;
+        }
+
+        .start-btn {
+            background-color: #a8e6cf;
+            color: #4a4a4a;
+            border: 2px solid #8fd4b9;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px rgba(143, 212, 185, 0.5);
+            transition: transform 0.1s;
+        }
+        .start-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px rgba(143, 212, 185, 0.5);
+        }
+
+        /* Floating Decor */
+        .float-icon {
+            position: absolute;
+            font-size: 28px;
+            opacity: 0.6;
+            animation: floatUpDown 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .heart { color: #ff80ab; top: 10%; left: 8%; }
+        .flower { color: #fff176; bottom: 10%; right: 8%; animation-delay: 1s;}
+        .flower2 { color: #ff80ab; top: 75%; left: 12%; animation-delay: 2s; font-size: 22px;}
+
+        @keyframes floatUpDown {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* SCENE 2: The Evasive Game (Takes up more screen) */
+        #game-window {
+            width: 85vw;
+            height: 80vh;
+            max-width: 1100px;
+            max-height: 700px;
+            display: none;
+            flex-direction: column;
+        }
+
+        #game-question {
+            color: #d88195;
+            font-size: 22px;
+            font-weight: bold;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-arena {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            overflow: hidden;
+            border: 2px dashed #fcdab7;
+            border-radius: 8px;
+            background-color: #fffdf9;
+        }
+
+        /* Shared Button Style */
+        .game-btn {
+            position: absolute;
+            width: 120px;
+            padding: 14px;
+            border: 2px solid;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: top 0.15s ease-out, left 0.15s ease-out; /* Super snappy evasion */
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        #btn-yes {
+            background-color: #a8e6cf;
+            border-color: #8fd4b9;
+            color: #2b5444;
+            left: 30%;
+            top: 45%;
+        }
+
+        #btn-no {
+            background-color: #ffb3ba;
+            border-color: #ff99a3;
+            color: #632d33;
+            left: 60%;
+            top: 45%;
+        }
+
+        #progress-container {
+            width: 90%;
+            height: 16px;
+            background-color: #eee;
+            border: 2px solid #edafaf;
+            border-radius: 8px;
+            margin: 16px auto 0 auto;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            height: 100%;
+            background-color: #ff80ab;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* SCENE 3: Lock-In & Transition */
+        #btn-yes.locked {
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            cursor: default;
+            background-color: #8fd4b9;
+            box-shadow: 0 0 15px rgba(168, 230, 207, 1);
+            animation: pulse-locked 1s infinite alternate;
+        }
+
+        @keyframes pulse-locked {
+            0% { box-shadow: 0 0 10px rgba(168, 230, 207, 0.5); }
+            100% { box-shadow: 0 0 25px rgba(168, 230, 207, 1); }
+        }
+
+        .btn-loader {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,.4);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Dimming Effect */
+        #main-container.dim {
+            transition: opacity 3s ease;
+            opacity: 0.05;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* SCENE 4 & 5: Blackout & Big Fireworks Reveal */
+        #final-stage {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #050505;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        #fireworks-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 101;
+            pointer-events: none;
+        }
+
+        #reel-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            height: 568px;
+            border: 4px solid #fff9f0;
+            border-radius: 35px;
+            overflow: hidden;
+            background-color: #000;
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            z-index: 102;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #reveal-video, #reveal-slideshow img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        #reveal-slideshow { display: none; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="float-icon heart">❤</div>
+    <div class="float-icon flower">✿</div>
+    <div class="float-icon flower2">🌸</div>
+
+    <audio id="ishq-audio" src="ishq.mp3"></audio>
+
+    <div id="main-container">
+        <!-- SCENE 1 -->
+        <div id="setup-popup" class="vapor-window">
+            <div class="window-header">
+                WELCOME.EXE
+                <div class="window-icons">_ ❐ ✕</div>
+            </div>
+            <div class="window-content">
+                <p>Make sure you should keep your device volume up and your hands should be on mouse.</p>
+                <button class="start-btn" onclick="startExperience()">lets move in</button>
+            </div>
+        </div>
+
+        <!-- SCENE 2 & 3 -->
+        <div id="game-window" class="vapor-window">
+            <div class="window-header">
+                QUESTION.EXE
+                <div class="window-icons">_ ❐ ✕</div>
+            </div>
+            <div class="window-content" style="display: flex; flex-direction: column; height: 100%;">
+                <div id="game-question">secretly I want to date someone, do you want to know who she is?</div>
+                <div class="game-arena" id="game-arena">
+                    <button id="btn-yes" class="game-btn">Yes</button>
+                    <button id="btn-no" class="game-btn">No</button>
+                </div>
+                <div id="progress-container">
+                    <div id="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCENE 4 & 5 -->
+    <div id="final-stage">
+        <canvas id="fireworks-canvas"></canvas>
+        <div id="reel-container">
+            <video id="reveal-video" src="her_video.mp4" playsinline></video>
+            <div id="reveal-slideshow">
+                <img src="photo_1.jpg" id="slide-1" alt="Her Photo 1">
+                <img src="photo_2.jpg" id="slide-2" alt="Her Photo 2">
+                <img src="photo_3.jpg" id="slide-3" alt="Her Photo 3">
+                <img src="photo_4.jpg" id="slide-4" alt="Her Photo 4">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const audio = document.getElementById('ishq-audio');
+        const setupPopup = document.getElementById('setup-popup');
+        const gameWindow = document.getElementById('game-window');
+        const arena = document.getElementById('game-arena');
+        const btnNo = document.getElementById('btn-no');
+        const btnYes = document.getElementById('btn-yes');
+        const questionText = document.getElementById('game-question');
+        const progressBar = document.getElementById('progress-bar');
+        
+        const totalDuration = 131; // 2:11 in seconds
+        let gameActive = false;
+
+        function startExperience() {
+            setupPopup.style.display = 'none';
+            gameWindow.style.display = 'flex';
+            gameActive = true;
+            audio.play();
+
+            audio.ontimeupdate = syncExperience;
+        }
+
+        // --- Aggressive Proximity Evasion (Both Buttons) ---
+        const evasionRadius = 120; // Distance in pixels before button jumps away
+
+        arena.addEventListener('mousemove', (e) => {
+            if (!gameActive) return;
+
+            const arenaRect = arena.getBoundingClientRect();
+            const mouseX = e.clientX - arenaRect.left;
+            const mouseY = e.clientY - arenaRect.top;
+
+            moveIfClose(btnNo, mouseX, mouseY, arenaRect);
+            moveIfClose(btnYes, mouseX, mouseY, arenaRect);
+        });
+
+        function moveIfClose(btn, mouseX, mouseY, arenaRect) {
+            const btnX = btn.offsetLeft + btn.offsetWidth / 2;
+            const btnY = btn.offsetTop + btn.offsetHeight / 2;
+
+            const distance = Math.hypot(mouseX - btnX, mouseY - btnY);
+
+            if (distance < evasionRadius) {
+                // Generate new coords safely inside the large arena
+                const maxLeft = arenaRect.width - btn.offsetWidth - 20;
+                const maxTop = arenaRect.height - btn.offsetHeight - 20;
+
+                const newLeft = Math.max(20, Math.floor(Math.random() * maxLeft));
+                const newTop = Math.max(20, Math.floor(Math.random() * maxTop));
+
+                btn.style.left = `${newLeft}px`;
+                btn.style.top = `${newTop}px`;
+            }
+        }
+
+        // --- Timing Sync ---
+        function syncExperience() {
+            let currentTime = audio.currentTime;
+
+            // Update Progress Bar
+            if (currentTime <= totalDuration) {
+                let percentage = (currentTime / totalDuration) * 100;
+                progressBar.style.width = percentage + '%';
+            }
+
+            // At 2:07 (127s) -> Change Header Text to Forced Message (4 sec before lock)
+            if (currentTime >= 127 && currentTime < 131) {
+                questionText.textContent = "You are unable to select any so that default is yes, I will appreciation your efforts and participation.";
+                questionText.style.fontSize = "15px";
+            }
+
+            // At 2:11 (131s) -> Lock YES button & Remove NO button
+            if (currentTime >= 131 && currentTime < 134 && gameActive) {
+                gameActive = false;
+                lockGame();
+            }
+
+            // At 2:14 (134s) -> Trigger Blackout
+            if (currentTime >= 134 && currentTime < 137) {
+                triggerBlackout();
+            }
+
+            // At 2:17 (137s) -> Grand Reveal & Fireworks
+            if (currentTime >= 137) {
+                triggerReveal();
+                audio.ontimeupdate = null;
+            }
+        }
+
+        function lockGame() {
+            btnNo.style.display = 'none';
+            btnYes.className = 'game-btn locked';
+            btnYes.innerHTML = 'Yes <span class="btn-loader"></span>';
+            document.getElementById('main-container').className = 'dim';
+        }
+
+        function triggerBlackout() {
+            document.getElementById('main-container').style.display = 'none';
+            document.getElementById('final-stage').style.display = 'block';
+        }
+
+        function triggerReveal() {
+            const reel = document.getElementById('reel-container');
+            const video = document.getElementById('reveal-video');
+
+            reel.style.opacity = '1';
+            reel.style.transition = 'opacity 2s ease';
+
+            video.style.display = 'block';
+            video.play();
+            
+            initBigFireworks();
+
+            video.onended = function() {
+                video.style.display = 'none';
+                startSlideshow();
+            };
+        }
+
+        function startSlideshow() {
+            const slideshow = document.getElementById('reveal-slideshow');
+            slideshow.style.display = 'block';
+            const images = slideshow.getElementsByTagName('img');
+            let currentImage = 0;
+
+            images[0].style.display = 'block';
+
+            setInterval(() => {
+                images[currentImage].style.display = 'none';
+                currentImage = (currentImage + 1) % images.length;
+                images[currentImage].style.display = 'block';
+            }, 3000);
+        }
+
+        // --- BIG CSS/CANVAS FIREWORKS ENGINE ---
+        function initBigFireworks() {
+            const canvas = document.getElementById('fireworks-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+
+            class Particle {
+                constructor(x, y, color) {
+                    this.x = x;
+                    this.y = y;
+                    this.color = color;
+                    // Large explosion radius velocities
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 8 + 2;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed;
+                    this.radius = Math.random() * 3 + 2; // Bigger particles
+                    this.alpha = 1;
+                    this.friction = 0.95;
+                    this.gravity = 0.12;
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = this.color;
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                update() {
+                    this.vx *= this.friction;
+                    this.vy *= this.friction;
+                    this.vy += this.gravity;
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.alpha -= 0.012;
+                }
+            }
+
+            let particles = [];
+            const colors = ['#ff80ab', '#a8e6cf', '#fff176', '#ffb3ba', '#76ff03', '#00e5ff'];
+
+            function spawnBurst() {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * (canvas.height * 0.6); // Explosions on top half
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                for (let i = 0; i < 60; i++) { // 60 particles per explosion
+                    particles.push(new Particle(x, y, color));
+                }
+            }
+
+            setInterval(spawnBurst, 500); // Trigger big burst every half-second
+
+            function animate() {
+                // Creates smooth trailing effect behind particles
+                ctx.fillStyle = 'rgba(5, 5, 5, 0.2)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach((p, index) => {
+                    if (p.alpha > 0) {
+                        p.update();
+                        p.draw();
+                    } else {
+                        particles.splice(index, 1);
+                    }
+                });
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+    </script>
+</body>
+</html>
