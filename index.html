@@ -349,9 +349,28 @@
             setupPopup.style.display = 'none';
             gameWindow.style.display = 'flex';
             gameActive = true;
-            audio.play();
 
-            audio.ontimeupdate = syncExperience;
+            // Force play on direct click interaction
+            audio.play().then(() => {
+                audio.ontimeupdate = syncExperience;
+                syncExperience();
+            }).catch(error => {
+                console.error("Autoplay blocked or failed:", error);
+
+                // Fallback: if audio fails to load/play, run a timer using JavaScript interval
+                let startTimestamp = Date.now();
+                let fallbackInterval = setInterval(() => {
+                    let elapsedSeconds = (Date.now() - startTimestamp) / 1000;
+
+                    // Fake the audio currentTime for sync function
+                    audio.currentTime = elapsedSeconds;
+                    syncExperience();
+
+                    if (elapsedSeconds >= 140) {
+                        clearInterval(fallbackInterval);
+                    }
+                }, 100);
+            });
         }
 
         // --- Aggressive Proximity Evasion (Both Buttons) ---
